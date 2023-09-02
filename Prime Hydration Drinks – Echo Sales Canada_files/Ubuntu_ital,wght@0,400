@@ -1,0 +1,28 @@
+@font-face {
+  font-family: 'Ubuntu';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.soundestlink.com/fonts/static/aHR0cHM6Ly9mb250cy5nc3RhdGljLmNvbS9zL3VidW50dS92MjAvNGlDdTZLVmpiTkJZbGdvS2VnN3cud29mZg==) format('woff');
+}
+@font-face {
+  font-family: 'Ubuntu';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.soundestlink.com/fonts/static/aHR0cHM6Ly9mb250cy5nc3RhdGljLmNvbS9zL3VidW50dS92MjAvNGlDcDZLVmpiTkJZbGdvS2VqWlBzbXlMLndvZmY=) format('woff');
+}
+@font-face {
+  font-family: 'Ubuntu';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.soundestlink.com/fonts/static/aHR0cHM6Ly9mb250cy5nc3RhdGljLmNvbS9zL3VidW50dS92MjAvNGlDczZLVmpiTkJZbGdvNmV3LndvZmY=) format('woff');
+}
+@font-face {
+  font-family: 'Ubuntu';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.soundestlink.com/fonts/static/aHR0cHM6Ly9mb250cy5nc3RhdGljLmNvbS9zL3VidW50dS92MjAvNGlDdjZLVmpiTkJZbGdvQ3hDdlR0QS53b2Zm) format('woff');
+}

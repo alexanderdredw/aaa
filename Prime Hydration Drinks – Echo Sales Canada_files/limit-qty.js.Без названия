@@ -1,0 +1,341 @@
+//For Product Page
+console.log("limit js call ");
+window.oldQty = 0;
+function testLimit(){
+    console.log("test Limitt Function");
+}
+function limitOnProductSuccess(isInitial = false) {
+    console.log("product success call");
+    var mcQtyInput = '';
+    mcQtyInputSelector.forEach((input) => {
+        if ($(document).find(input).length > 0) {
+            mcQtyInput = $(input);
+        }
+    })
+
+    //if qty input found then alert popup show
+    if (mcQtyInput != '') {
+        var qty = mcQtyInput.val();
+        var updateQty = qty;
+        var res = window.mcproductresponse.data;
+        var msg = true;
+
+        // If product limit set 
+        if (typeof res == 'object') {
+ 
+            if (res?.priority) {
+                for (const [key, value] of Object.entries(res.priority)) {
+
+                    if (value == "COLLECTION_MIN_MAX" || value == "PRODUCT_LIMIT") {
+                        if (res.product.info && Object.keys(res.product.info).length != 0) {
+                            msg = productsLimit(res, qty, isInitial);
+                            break;
+                        }
+                    }
+
+                    if (value == "VARIANT_LIMIT") {
+                        if (typeof res.variants == "object" && res.variants.length > 0) {
+                            msg = productVariantLimit(res, qty, isInitial);
+                            break;
+                        }
+                    }
+
+                    if (value == "GLOBAL_LIMIT") {
+                        if (res.global.info && Object.keys(res.global.message).length > 0 && Object.keys(res.global.info).length != 0) {
+                            msg = globalLimit(res, qty, isInitial);
+                            break;
+                        }
+                    }
+                    
+                    if (value == "TAG_LIMIT") {
+                        if (res?.tag?.info && Object.keys(res.tag.info).length != 0) {
+                            msg = customerTagLimit(res, qty, isInitial);
+                            break;
+                        }
+                    }
+                }
+            }
+            return msg;
+        }
+    }
+}
+
+// If Limit set on customers tag
+function customerTagLimit(res, qty, isInitial) {
+    var tagMinQty = res.tag.info.min_limit;
+    var tagMaxQty = res.tag.info.max_limit;
+    var tagIncrementQty = res.tag.info.increment_qty;
+    var update_tag_qty = qty;
+    var tagMsg = '';
+
+    if (!isInitial) {
+        if (tagIncrementQty != 0 && tagIncrementQty) {
+            update_tag_qty = getNewInputQty(qty, tagIncrementQty);
+        } else {
+            update_tag_qty = getNewInputQty(qty);
+        }
+    }
+    if (tagMinQty != 0 && tagMinQty && tagMaxQty != 0 && tagMaxQty) {
+        if (update_tag_qty > tagMaxQty) {
+            msg = res.tag.message.upper_limit_msg;
+            update_tag_qty = getNewInputQty(tagMaxQty, tagIncrementQty, false, true, false);
+            setInputQty(update_tag_qty);
+            showMessage(msg, isInitial);
+
+        } else if (update_tag_qty < tagMinQty) {
+            msg = res.tag.message.lower_limit_msg;
+            update_tag_qty = getNewInputQty(tagMinQty, tagIncrementQty, false, false, true);
+            setInputQty(update_tag_qty);
+            showMessage(msg, isInitial);
+        } else {
+            setInputQty(update_tag_qty);
+        }
+    }
+    else if (tagIncrementQty && tagIncrementQty != 0) {
+        if (update_tag_qty <= 0) {
+            setInputQty(tagIncrementQty);
+        } else {
+            setInputQty(update_tag_qty);
+        }
+    }
+
+    if ((tagMinQty != 0 && tagMinQty && tagMaxQty != 0 && tagMaxQty || (tagIncrementQty == 0 && !tagIncrementQty)) && isInitial) {
+        setInputQty(tagMinQty);
+    }
+
+    if (tagIncrementQty != 0 && tagIncrementQty && isInitial) {
+        var tagNewQty = getNewInputQty(qty, tagIncrementQty, isInitial);
+        if (tagMinQty != 0 && tagMinQty && tagMaxQty != 0 && tagMaxQty && isInitial) {
+            if (tagNewQty < tagMinQty) {
+                tagNewQty = getNewInputQty(tagMinQty, tagIncrementQty, isInitial, false, true);
+            } else if (tagNewQty > tagMaxQty) {
+                tagNewQty = getNewInputQty(tagMaxQty, tagIncrementQty, isInitial, true, false);
+            }
+        }
+        setInputQty(tagNewQty);
+    }
+
+    return true;
+}
+
+// If Limit Set on Products
+function productsLimit(res, qty, isInitial) {
+    
+    var updateQty = qty;
+    var maxQty = res.product.info.purchase_limit;
+    var minQty = res.product.info.min_purchase_limit;
+    var incrementQty = res.product.info.increment_qty;
+    var msg = '';
+
+    if (!isInitial) {
+        if (incrementQty != 0 && incrementQty) {
+            updateQty = getNewInputQty(qty, incrementQty);
+        } else {
+            updateQty = getNewInputQty(qty);
+        }
+
+        if (minQty != 0 && minQty && maxQty != 0 && maxQty) {
+            if (updateQty > maxQty) {
+                msg = res.product.message.upper_limit_msg;
+                updateQty = getNewInputQty(maxQty, incrementQty, false, true, false);
+                
+                setInputQty(updateQty);
+                showMessage(msg, isInitial);
+
+            } else if (updateQty < minQty) {
+                msg = res.product.message.lower_limit_msg;
+                updateQty = getNewInputQty(minQty, incrementQty, false, false, true);
+                
+                setInputQty(updateQty);
+                showMessage(msg, isInitial);
+            } else {
+                setInputQty(updateQty);
+                
+            }
+        } else if (incrementQty && incrementQty != 0) {
+            if (updateQty <= 0) {
+                setInputQty(incrementQty);
+            } else {
+                setInputQty(updateQty);
+            }
+        }
+    }
+
+    if ((minQty != 0 && minQty && maxQty != 0 && maxQty || (incrementQty == 0 && !incrementQty)) && isInitial ) {
+        
+        setInputQty(minQty);
+    }
+
+    if (incrementQty != 0 && incrementQty && isInitial) {
+        var newQty = getNewInputQty(qty, incrementQty, isInitial);
+        if (minQty != 0 && minQty && maxQty != 0 && maxQty && isInitial) {
+            if (newQty < minQty) {
+                newQty = getNewInputQty(minQty, incrementQty, isInitial, false, true);
+            } else if (newQty > maxQty) {
+                newQty = getNewInputQty(maxQty, incrementQty, isInitial, true, false);
+            }
+        }
+        
+        setInputQty(newQty);
+    }
+
+    return true;
+}
+
+// If Limit Set On Product Variant
+function productVariantLimit(res, qty, isInitial) {
+    var queryString = window.location.search;
+    var urlParams = new URLSearchParams(queryString);
+    var variant_id = urlParams.get('variant') || defaultvariantId;
+
+    var productData = $('form[action^="/cart/add"], form[action$="/cart/add"]').serializeArray();
+    productData.map((product) => {
+        if (product.name == 'id') {
+            variant_id = product.value;
+        }
+    });
+            
+    if (variant_id) {
+        res.variants.forEach((variant) => {
+            if (variant.info.id == variant_id) {
+
+                let variantMsg = "";
+                let min_qty = variant.info.lower_limit;
+                let max_qty = variant.info.purchase_limit;
+                var increment_Qty = variant.info.increment_qty;
+                var update_qty = qty;
+
+                if (!isInitial) {
+                    if (increment_Qty != 0 && increment_Qty) {
+                        update_qty = getNewInputQty(qty, increment_Qty);
+                    } else {
+                        update_qty = getNewInputQty(qty);
+                    }
+
+                    if (max_qty != null && max_qty != 0 && max_qty && min_qty != null && min_qty != 0 && min_qty) {
+                        if (update_qty > max_qty) {
+                            
+                            variantMsg = variant.message.upper_limit_msg;
+                            update_qty = getNewInputQty(max_qty, increment_Qty, false, true, false);
+                            setInputQty(update_qty);
+
+                        } else if (update_qty < min_qty) {
+                            
+                            variantMsg = variant.message.lower_limit_msg;
+                            update_qty = getNewInputQty(min_qty, increment_Qty, false, false, true);
+                            setInputQty(update_qty);
+                        }
+                        else {
+                            setInputQty(update_qty);
+
+                        }
+                    }
+                    else if (increment_Qty && increment_Qty != 0) {
+                        if (update_qty <= 0) {
+                            setInputQty(increment_Qty);
+                        } else {
+                            setInputQty(update_qty);
+                        }
+                    }
+
+                    if (variantMsg != '' && !isInitial) {
+                        var t = "<ul><li>" + variantMsg + "</li> </ul>";
+                        $("#purchase_limit_messages").html(t)
+                        $("#purchase_limit_messages").closest(".modal-custom").css("display", "block");
+                    }
+                }
+                if ((min_qty != 0 && min_qty && max_qty != 0 && max_qty || (increment_Qty == 0 && !increment_Qty)) && isInitial ) {
+                    setInputQty(min_qty);
+                }
+
+                if (increment_Qty != 0 && increment_Qty && isInitial) {
+                    var new_qty = getNewInputQty(qty, increment_Qty, isInitial);
+                    if (min_qty != 0 && min_qty && max_qty != 0 && max_qty && isInitial) {
+                        if (new_qty < min_qty) {
+                            new_qty = getNewInputQty(min_qty, increment_Qty, isInitial, false, true);
+
+                        } else if (new_qty > max_qty) {
+                            new_qty = getNewInputQty(max_qty, increment_Qty, isInitial, true, false);
+                        }
+                    }
+                    setInputQty(new_qty);
+                }
+            }
+        })
+    }
+    return true;
+}
+
+// If Limit set on Globally
+function globalLimit(res, qty, isInitial) {
+    var globalMaxQty = res.global.info.global_limit;
+    var globalMinQty = res.global.info.min_global_limit;
+    var globalMsg = '';
+
+    if (globalMaxQty != null && globalMinQty != null) {
+        if (qty > globalMaxQty) {
+            globalMsg = res.global.message.upper_limit_msg;
+            setInputQty(globalMaxQty);
+        } else if (qty < globalMinQty) {
+            globalMsg = res.global.message.lower_limit_msg;
+            setInputQty(globalMinQty);
+        }
+    }
+    if (globalMsg != '' && !isInitial) {
+        showMessage(globalMsg, isInitial);
+        var t = "<ul><li>" + globalMsg + "</li> </ul>";
+        $("#purchase_limit_messages").html(t)
+        $("#purchase_limit_messages").closest(".modal-custom").css("display", "block");
+    }
+    return true;
+}
+
+function getNewInputQty(qty, incrementQty = 0, isInitial = false, isMax = false, isMin = false) {
+    qty = parseInt(qty, 10);
+    incrementQty = parseInt(incrementQty, 10);
+    let newQty = qty;
+    if (isInitial && incrementQty && incrementQty != 0) {
+        newQty = Math.ceil(qty / incrementQty) * incrementQty;
+        if (isMax) {
+            newQty = Math.floor(qty / incrementQty) * incrementQty;
+        }
+    } else if (window.oldQty < qty && incrementQty != 0 && incrementQty) {
+        if (isMax) {
+            newQty = Math.floor(qty / incrementQty) * incrementQty;
+        } else {
+            newQty = Math.ceil(qty / incrementQty) * incrementQty;
+        }
+    } else if (window.oldQty > qty && incrementQty != 0 && incrementQty) {
+        if (isMin) {
+            newQty = Math.ceil(qty / incrementQty) * incrementQty;
+        } else {
+            newQty = Math.floor(qty / incrementQty) * incrementQty;
+        }
+    }else {
+        newQty = qty;
+    }
+    return parseInt(newQty, 10);
+}
+
+function setInputQty(newQtyOne) {
+    console.log("set qty");
+    console.log(newQtyOne);
+
+    window.oldQty = parseInt(newQtyOne, 10);
+    var mcQtyInput = '';
+    mcQtyInputSelector.forEach((input) => {
+        if ($(document).find(input).length > 0) {
+            mcQtyInput = $(input);
+        }
+    })
+
+    mcQtyInput.val(parseInt(newQtyOne, 10));
+}
+
+function showMessage(msg, isInitial) {
+    if (msg != '' && !isInitial) {
+        var t = "<ul><li>" + msg + "</li> </ul>";
+        $("#purchase_limit_messages").html(t)
+        $("#purchase_limit_messages").closest(".modal-custom").css("display", "block");
+    }
+}
